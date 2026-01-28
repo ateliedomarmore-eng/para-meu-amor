@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Um Presente Especial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+        }
+
+        /* Lock Screen */
+        #lockScreen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        #lockScreen.hidden {
+            opacity: 0;
+            transform: scale(0.9);
+            pointer-events: none;
+            display: none;
+        }
+
+        .lock-icon {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        .lock-title {
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin-bottom: 3rem;
+            color: #d4af37;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .password-container {
+            position: relative;
+            width: 80%;
+            max-width: 350px;
+        }
+
+        #passwordInput {
+            width: 100%;
+            padding: 1.2rem 1.5rem;
+            font-size: 1.1rem;
+            background: rgba(42, 42, 42, 0.6);
+            border: 2px solid #3a3a3a;
+            border-radius: 12px;
+            color: #e0e0e0;
+            text-align: center;
+            letter-spacing: 3px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #passwordInput:focus {
+            outline: none;
+            border-color: #d4af37;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
+        #passwordInput.error {
+            animation: shake 0.5s;
+            border-color: #ff4444;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        .unlock-btn {
+            margin-top: 1.5rem;
+            padding: 1rem 3rem;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+            border: none;
+            border-radius: 25px;
+            color: #0a0a0a;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .unlock-btn:active {
+            transform: scale(0.95);
+        }
+
+        .caps-lock-warning {
+            display: none;
+            margin-top: 0.8rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 152, 0, 0.2);
+            border: 1px solid #ff9800;
+            border-radius: 8px;
+            color: #ffa726;
+            font-size: 0.9rem;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .caps-lock-warning.active {
+            display: block;
+        }
+
+        /* Game Screen */
+        #gameScreen {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+            background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+        }
+
+        #gameScreen.active {
+            display: block;
+        }
+
+        .game-header {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #3a3a3a;
+        }
+
+        .score {
+            font-size: 1.2rem;
+            color: #d4af37;
+            font-weight: 600;
+        }
+
+        .score-positive {
+            color: #4CAF50;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 80px;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 80px);
+            touch-action: none;
+        }
+
+        /* Final Screen */
+        #finalScreen {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            overflow: hidden;
+            position: relative;
+        }
+
+        #finalScreen.active {
+            display: block;
+        }
+
+        .credits-container {
+            position: absolute;
+            bottom: -100%;
+            width: 100%;
+            padding: 2rem;
+            animation: scrollUp 30s linear infinite;
+        }
+
+        @keyframes scrollUp {
+            to {
+                bottom: 100%;
+            }
+        }
+
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            animation: explode 1s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .celebration-text {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3rem;
+            color: #d4af37;
+            font-weight: bold;
+            text-align: center;
+            z-index: 1000;
+            animation: bounce 1s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(-20px);
+            }
+        }
+
+        .replay-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+            border: none;
+            border-radius: 30px;
+            color: #0a0a0a;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 2000;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .replay-btn:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+        }
+
+        .replay-btn:active {
+            transform: translateX(-50%) scale(0.98);
+        }
+
+        .credits-text {
+            text-align: center;
+            font-size: 1.1rem;
+            line-height: 2;
+            color: #e0e0e0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .credits-text h1 {
+            color: #d4af37;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .credits-text p {
+            margin-bottom: 1.5rem;
+            font-weight: 300;
+        }
+
+        .heart-decoration {
+            color: #d4af37;
+            font-size: 2rem;
+            margin: 2rem 0;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+        }
+
+        /* Game Over Overlay */
+        .game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(26, 26, 26, 0.95);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 2px solid #d4af37;
+            text-align: center;
+            z-index: 100;
+        }
+
+        .game-over.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .game-over h2 {
+            color: #ff4444;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .retry-btn {
+            margin-top: 1rem;
+            padding: 0.8rem 2rem;
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+            border: none;
+            border-radius: 20px;
+            color: #0a0a0a;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Lock Screen -->
+    <div id="lockScreen">
+        <div class="lock-icon">🔒</div>
+        <div class="lock-title">Presente Especial</div>
+        <div class="password-container">
+            <input type="password" id="passwordInput" placeholder="Digite a senha">
+            <button class="unlock-btn" onclick="checkPassword()">Desbloquear</button>
+            <div class="caps-lock-warning" id="capsLockWarning">⚠️ Caps Lock está ativado</div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen">
+        <div class="game-header">
+            <div class="score">Positivas: <span id="positiveScore" class="score-positive">0</span>/10</div>
+            <div class="score">Negativas: <span id="negativeScore">0</span></div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div class="game-over" id="gameOver">
+            <h2>Você pegou uma palavra negativa!</h2>
+            <p>Tente novamente e foque nas palavras positivas.</p>
+            <button class="retry-btn" onclick="restartGame()">Tentar Novamente</button>
+        </div>
+    </div>
+
+    <!-- Final Screen -->
+    <div id="finalScreen">
+    </div>
+
+    <script>
+        // Password Configuration
+        const CORRECT_PASSWORD = "Outubro";
+
+        // Game Configuration
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let animationId;
+        let gameRunning = false;
+
+        // Responsive canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - 80;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Game State
+        let player = {
+            x: 0,
+            y: 0,
+            width: 40,
+            height: 40,
+            speed: 8
+        };
+
+        let fallingWords = [];
+        let positiveScore = 0;
+        let negativeScore = 0;
+        const WORDS_TO_WIN = 10;
+
+        const wordSets = [
+            {
+                positive: ['Amor', 'Confiança', 'Conexão', 'Carinho', 'Verdade', 'Alegria'],
+                negative: ['Falsidade', 'Desinteresse', 'Solidão', 'Mentira', 'Indiferença']
+            },
+            {
+                positive: ['Katherine', 'Felicidade', 'Cumplicidade', 'Respeito', 'Ternura', 'Paixão'],
+                negative: ['Egoísmo', 'Frieza', 'Distância', 'Dúvida', 'Mágoa']
+            },
+            {
+                positive: ['Sorriso', 'Abraço', 'Beijo', 'Cuidado', 'Apoio', 'Lealdade'],
+                negative: ['Traição', 'Abandono', 'Descaso', 'Ingratidão', 'Rancor']
+            },
+            {
+                positive: ['Outubro', 'Encontro', 'Momento', 'Memória', 'Presente', 'Futuro'],
+                negative: ['Ausência', 'Esquecimento', 'Vazio', 'Arrependimento', 'Perda']
+            }
+        ];
+
+        const finalMessages = [
+            `<p><strong>Querida Katherine,</strong></p>
+            <p>Em meio a tantas palavras vazias e momentos de solidão, você brilhou como algo genuíno e especial.</p>
+            <p>Este presente é uma forma de dizer que você é valorizada, que sua presença faz diferença, e que a conexão que compartilhamos é real.</p>
+            <p>Que você sempre escolha as palavras positivas, as pessoas verdadeiras, e os momentos que realmente importam.</p>
+            <p>Continue sendo essa pessoa incrível que você é, eu te amo mil milhões.</p>`,
+
+            `<p><strong>Para Katherine,</strong></p>
+            <p>Cada momento ao seu lado é um presente que guardo com carinho no coração.</p>
+            <p>Você me ensina diariamente o que é amar de verdade, com paciência, compreensão e cumplicidade.</p>
+            <p>Obrigado por ser essa pessoa maravilhosa que ilumina meus dias.</p>
+            <p>Te amo hoje, amanhã e sempre.</p>`,
+
+            `<p><strong>Minha querida Katherine,</strong></p>
+            <p>Desde outubro, quando nos conhecemos, minha vida ganhou cores que eu nem sabia que existiam.</p>
+            <p>Você trouxe alegria, paz e um amor que eu nunca imaginei sentir.</p>
+            <p>Cada dia contigo é uma nova aventura, e eu quero viver todas elas ao seu lado.</p>
+            <p>Você é especial demais, e eu te amo infinitamente.</p>`,
+
+            `<p><strong>Katherine,</strong></p>
+            <p>Você é a pessoa que eu escolho todos os dias, em cada pequeno gesto e grande decisão.</p>
+            <p>Seu sorriso é meu lugar favorito, seu abraço é meu refúgio.</p>
+            <p>Obrigado por existir e por fazer parte da minha história.</p>
+            <p>Eu te amo mais do que as palavras podem expressar.</p>`
+        ];
+
+        let currentWordSetIndex = 0;
+        let currentMessageIndex = 0;
+        let positiveWords = wordSets[0].positive;
+        let negativeWords = wordSets[0].negative;
+
+        // Touch/Mouse controls
+        let touchX = null;
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            touchX = e.touches[0].clientX;
+        });
+
+        canvas.addEventListener('touchend', () => {
+            touchX = null;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            touchX = e.clientX;
+        });
+
+        // Password Check
+        function checkPassword() {
+            const input = document.getElementById('passwordInput');
+            if (input.value === CORRECT_PASSWORD) {
+                document.getElementById('lockScreen').classList.add('hidden');
+                setTimeout(() => {
+                    document.getElementById('gameScreen').classList.add('active');
+                    startGame();
+                }, 800);
+            } else {
+                input.classList.add('error');
+                setTimeout(() => input.classList.remove('error'), 500);
+                input.value = '';
+            }
+        }
+
+        document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
+        });
+
+        // Caps Lock Detection
+        const passwordInput = document.getElementById('passwordInput');
+        const capsLockWarning = document.getElementById('capsLockWarning');
+
+        passwordInput.addEventListener('keyup', (e) => {
+            if (e.getModifierState && e.getModifierState('CapsLock')) {
+                capsLockWarning.classList.add('active');
+            } else {
+                capsLockWarning.classList.remove('active');
+            }
+        });
+
+        // Game Functions
+        function startGame() {
+            gameRunning = true;
+            positiveScore = 0;
+            negativeScore = 0;
+            fallingWords = [];
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height - player.height - 20;
+
+            currentWordSetIndex = Math.floor(Math.random() * wordSets.length);
+            positiveWords = wordSets[currentWordSetIndex].positive;
+            negativeWords = wordSets[currentWordSetIndex].negative;
+
+            updateScore();
+            gameLoop();
+            spawnWords();
+        }
+
+        function spawnWords() {
+            if (!gameRunning) return;
+
+            const isPositive = Math.random() > 0.4;
+            const wordList = isPositive ? positiveWords : negativeWords;
+            const word = wordList[Math.floor(Math.random() * wordList.length)];
+
+            fallingWords.push({
+                text: word,
+                x: Math.random() * (canvas.width - 100),
+                y: -30,
+                speed: 2 + Math.random() * 2,
+                isPositive: isPositive,
+                width: 0,
+                height: 30
+            });
+
+            setTimeout(spawnWords, 1000 + Math.random() * 1500);
+        }
+
+        function updateScore() {
+            document.getElementById('positiveScore').textContent = positiveScore;
+            document.getElementById('negativeScore').textContent = negativeScore;
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update player position
+            if (touchX !== null) {
+                player.x = touchX - player.width / 2;
+            }
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+
+            // Draw player (heart)
+            ctx.font = '40px Arial';
+            ctx.fillText('💛', player.x, player.y + player.height);
+
+            // Update and draw falling words
+            ctx.font = '20px Segoe UI';
+            for (let i = fallingWords.length - 1; i >= 0; i--) {
+                const word = fallingWords[i];
+                word.y += word.speed;
+
+                // Measure text width
+                word.width = ctx.measureText(word.text).width;
+
+                // Draw word
+                ctx.fillStyle = word.isPositive ? '#4CAF50' : '#ff4444';
+                ctx.fillText(word.text, word.x, word.y);
+
+                // Collision detection
+                if (word.y + word.height > player.y &&
+                    word.y < player.y + player.height &&
+                    word.x + word.width > player.x &&
+                    word.x < player.x + player.width) {
+
+                    if (word.isPositive) {
+                        positiveScore++;
+                        updateScore();
+                        fallingWords.splice(i, 1);
+
+                        if (positiveScore >= WORDS_TO_WIN) {
+                            winGame();
+                        }
+                    } else {
+                        loseGame();
+                        return;
+                    }
+                }
+
+                // Remove off-screen words
+                if (word.y > canvas.height) {
+                    fallingWords.splice(i, 1);
+                }
+            }
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function loseGame() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            document.getElementById('gameOver').classList.add('active');
+        }
+
+        function restartGame() {
+            document.getElementById('gameOver').classList.remove('active');
+            startGame();
+        }
+
+        function winGame() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            document.getElementById('gameScreen').classList.remove('active');
+            const finalScreen = document.getElementById('finalScreen');
+            finalScreen.classList.add('active');
+
+            finalScreen.innerHTML = '';
+
+            const celebrationText = document.createElement('div');
+            celebrationText.className = 'celebration-text';
+            celebrationText.textContent = '🎉 VOCÊ GANHOU! 🎉';
+            finalScreen.appendChild(celebrationText);
+
+            const creditsContainer = document.createElement('div');
+            creditsContainer.className = 'credits-container';
+
+            currentMessageIndex = Math.floor(Math.random() * finalMessages.length);
+
+            creditsContainer.innerHTML = `
+                <div class="credits-text">
+                    <h1>Parabéns! ✨</h1>
+                    <div class="heart-decoration">💛</div>
+                    <p>Você conseguiu!</p>
+                    <p>Assim como neste jogo, você escolheu focar no que é positivo e verdadeiro.</p>
+                    <p>Esta é uma mensagem especial para você:</p>
+                    <div class="heart-decoration">💛</div>
+                    ${finalMessages[currentMessageIndex]}
+                    <div class="heart-decoration">💛</div>
+                    <p><strong>Com carinho,</strong></p>
+                    <p><strong>Henri</strong></p>
+                    <div class="heart-decoration">💛</div>
+                    <p style="margin-top: 3rem; font-size: 0.9rem; opacity: 0.7;">Feito especialmente para você</p>
+                </div>
+            `;
+
+            finalScreen.appendChild(creditsContainer);
+
+            const replayBtn = document.createElement('button');
+            replayBtn.className = 'replay-btn';
+            replayBtn.textContent = '🎮 Jogar Novamente';
+            replayBtn.onclick = replayGame;
+            finalScreen.appendChild(replayBtn);
+
+            createFireworks();
+            const fireworkInterval = setInterval(createFireworks, 2000);
+            finalScreen.dataset.fireworkInterval = fireworkInterval;
+        }
+
+        function replayGame() {
+            const finalScreen = document.getElementById('finalScreen');
+            clearInterval(parseInt(finalScreen.dataset.fireworkInterval));
+            finalScreen.classList.remove('active');
+            document.getElementById('gameScreen').classList.add('active');
+            startGame();
+        }
+
+        function createFireworks() {
+            const finalScreen = document.getElementById('finalScreen');
+            const colors = ['#d4af37', '#f4d03f', '#ff6b6b', '#4ecdc4', '#95e1d3'];
+
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight * 0.6;
+
+                    for (let j = 0; j < 30; j++) {
+                        const firework = document.createElement('div');
+                        firework.className = 'firework';
+                        firework.style.left = x + 'px';
+                        firework.style.top = y + 'px';
+                        firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+                        const angle = (Math.PI * 2 * j) / 30;
+                        const velocity = 50 + Math.random() * 50;
+                        firework.style.setProperty('--tx', Math.cos(angle) * velocity + 'px');
+                        firework.style.setProperty('--ty', Math.sin(angle) * velocity + 'px');
+
+                        finalScreen.appendChild(firework);
+
+                        setTimeout(() => firework.remove(), 1000);
+                    }
+                }, i * 300);
+            }
+        }
+    </script>
+</body>
+
+</html>
